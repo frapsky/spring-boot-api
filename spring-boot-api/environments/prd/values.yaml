@@ -1,0 +1,15 @@
+# Production environment values
+replicaCount: 5
+
+ingress:
+  host: "api.example.com"
+
+springProfile: "prd"
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi

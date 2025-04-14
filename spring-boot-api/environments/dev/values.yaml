@@ -1,0 +1,7 @@
+# Development environment values
+replicaCount: 3
+
+ingress:
+  host: "dev.api.example.com"
+
+springProfile: "dev"
