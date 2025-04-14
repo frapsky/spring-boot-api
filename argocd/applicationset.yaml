@@ -15,12 +15,12 @@ spec:
             environment: prd
   template:
     metadata:
-      name: spring-boot-api
+      name: spring-boot-api-{{name}}
       namespace: argocd
       finalizers:
         - resources-finalizer.argocd.argoproj.io
     spec:
-      project: spring-boot-api-apps
+      project: spring-boot-apps
       syncPolicy:
         automated:
           prune: true
@@ -29,16 +29,16 @@ spec:
           - CreateNamespace=true
       destination:
         server: https://kubernetes.default.svc
-        namespace: spring-boot-api
+        namespace: spring-boot-api-{{name}}
       sources:
         - repoURL: https://github.com/frapsky/spring-boot-api.git
           targetRevision: main
-          path: spring-boot-api
+          path: chart
           helm:
-            releaseName: spring-boot-api
+            releaseName: spring-boot-api-{{name}}
         - repoURL: https://github.com/frapsky/spring-boot-api.git
           targetRevision: main
-          path: spring-boot-api/environments/{{environment}}
+          path: environments/{{environment}}
           helm:
             valueFiles:
               - values.yaml
