@@ -33,7 +33,7 @@ spec:
       sources:
         - repoURL: https://github.com/frapsky/spring-boot-api.git
           targetRevision: main
-          path: chart
+          path: spring-boot-api
           helm:
             releaseName: spring-boot-api-{{name}}
         - repoURL: https://github.com/frapsky/spring-boot-api.git
