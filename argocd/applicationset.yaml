@@ -35,10 +35,9 @@ spec:
           targetRevision: HEAD
           path: spring-boot-api
           helm:
-            releaseName: spring-boot-api-{{name}}
+            valueFiles:
+              - $values/values.yaml
         - repoURL: https://github.com/frapsky/spring-boot-api.git
           targetRevision: HEAD
           path: environments/{{environment}}
-          helm:
-            valueFiles:
-              - values.yaml
+          ref: values
