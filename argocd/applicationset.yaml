@@ -20,7 +20,7 @@ spec:
       finalizers:
         - resources-finalizer.argocd.argoproj.io
     spec:
-      project: spring-boot-apps
+      project: spring-boot-api-apps
       syncPolicy:
         automated:
           prune: true
@@ -32,12 +32,12 @@ spec:
         namespace: spring-boot-api-{{name}}
       sources:
         - repoURL: https://github.com/frapsky/spring-boot-api.git
-          targetRevision: main
+          targetRevision: HEAD
           path: spring-boot-api
           helm:
             releaseName: spring-boot-api-{{name}}
         - repoURL: https://github.com/frapsky/spring-boot-api.git
-          targetRevision: main
+          targetRevision: HEAD
           path: environments/{{environment}}
           helm:
             valueFiles:
