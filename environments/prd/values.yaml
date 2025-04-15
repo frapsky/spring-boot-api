@@ -2,7 +2,7 @@
 replicaCount: 5
 
 ingress:
-  host: "api.example.com"
+  host: "prd.api.example.com"
 
 springProfile: "prd"
 
