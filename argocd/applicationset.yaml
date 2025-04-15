@@ -32,12 +32,13 @@ spec:
         namespace: spring-boot-api-{{name}}
       sources:
         - repoURL: https://github.com/frapsky/spring-boot-api.git
-          targetRevision: HEAD
+          chart: spring-boot-api
+          targetRevision: main
           path: spring-boot-api
           helm:
             valueFiles:
               - $values/values.yaml
         - repoURL: https://github.com/frapsky/spring-boot-api.git
-          targetRevision: HEAD
+          targetRevision: main
           path: environments/{{environment}}
           ref: values
