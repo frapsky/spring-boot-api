@@ -1,0 +1,118 @@
+image: google/cloud-sdk:latest
+
+stages:
+  - validate
+  - plan
+  - apply
+
+.gcp_auth_template:
+  before_script:
+    - echo "Authenticating to GCP using Workload Identity Federation..."
+    - echo "GCP Authentication successful."
+
+.init_commands: &init_commands
+  - cd ${TF_ROOT}
+  - echo "Initializing Terraform in $(pwd)..."
+  - terraform init -reconfigure -input=false
+  - echo "Terraform initialized."
+
+.plan_commands: &plan_commands
+  - echo "Running Terraform plan in $(pwd)..."
+  - terraform plan -var-file="${TF_VAR_FILE}" -out=tfplan -input=false
+  - echo "Plan generated."
+
+.apply_commands: &apply_commands
+  - echo "Applying Terraform plan in $(pwd)..."
+  - terraform apply -input=false tfplan
+  - echo "Apply complete."
+
+validate:
+  stage: validate
+  before_script:
+    - apt-get update && apt-get install -y wget unzip
+    - TF_VERSION=1.5.7
+    - wget https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+    - unzip terraform_${TF_VERSION}_linux_amd64.zip -d /usr/local/bin/
+    - rm terraform_${TF_VERSION}_linux_amd64.zip
+    - terraform --version
+  script:
+    - echo "Running Terraform fmt check..."
+    - terraform fmt -check -recursive
+    - echo "Running Terraform validate for dev..."
+    - terraform -chdir=dev init -backend=false
+    - terraform -chdir=dev validate
+    - echo "Running Terraform validate for prd..."
+    - terraform -chdir=prd init -backend=false
+    - terraform -chdir=prd validate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+plan:dev:
+  stage: plan
+  variables:
+    TF_ROOT: dev
+    TF_VAR_FILE: dev.tfvars
+    GCP_PROJECT_ID: $GCP_PROJECT_ID_DEV
+  extends: .gcp_auth_template
+  script:
+    - *init_commands
+    - *plan_commands
+  artifacts:
+    paths:
+      - ${TF_ROOT}/tfplan
+    expire_in: 1 day
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+plan:prd:
+  stage: plan
+  variables:
+    TF_ROOT: prd
+    TF_VAR_FILE: prd.tfvars
+    GCP_PROJECT_ID: $GCP_PROJECT_ID_PRD
+  extends: .gcp_auth_template
+  script:
+    - *init_commands
+    - *plan_commands
+  artifacts:
+    paths:
+      - ${TF_ROOT}/tfplan
+    expire_in: 1 day
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+apply:dev:
+  stage: apply
+  variables:
+    TF_ROOT: dev
+    GCP_PROJECT_ID: $GCP_PROJECT_ID_DEV
+  needs: ["plan:dev"]
+  extends: .gcp_auth_template
+  script:
+    - *init_commands
+    - *apply_commands
+  environment:
+    name: development
+    url: $DEV_APP_URL
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+  allow_failure: false
+
+apply:prd:
+  stage: apply
+  variables:
+    TF_ROOT: prd
+    GCP_PROJECT_ID: $GCP_PROJECT_ID_PRD
+  needs: ["plan:prd"]
+  extends: .gcp_auth_template
+  script:
+    - *init_commands
+    - *apply_commands
+  environment:
+    name: production
+    url: $PRD_APP_URL
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+  allow_failure: false
